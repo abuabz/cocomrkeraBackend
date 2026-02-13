@@ -3,11 +3,20 @@ const env = require('./env');
 
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(env.MONGODB_URI);
+        const uri = env.MONGODB_URI;
+        if (!uri) {
+            throw new Error('MONGODB_URI is not defined in environment variables');
+        }
+        
+        // Mask URI for logging (hide username/password)
+        const maskedUri = uri.replace(/\/\/.*@/, '//****:****@');
+        console.log(`Connecting to MongoDB: ${maskedUri}`);
+
+        const conn = await mongoose.connect(uri);
         console.log(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
-        console.error(`Error: ${error.message}`);
-        process.exit(1);
+        console.error(`Database Connection Error: ${error.message}`);
+        throw error; // Rethrow to be handled by startServer
     }
 };
 

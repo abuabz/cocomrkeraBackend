@@ -10,12 +10,18 @@ class EmployeeService {
 
         // Auto-generate code if not provided
         if (!data.code) {
-            const lastEmployee = await Employee.findOne().sort({ code: -1 });
+            // Find the employee with the highest number in their code
+            const employees = await Employee.find({}, { code: 1 }).lean();
             let nextNumber = 1;
-            if (lastEmployee && lastEmployee.code) {
-                const match = lastEmployee.code.match(/\d+/);
-                if (match) {
-                    nextNumber = parseInt(match[0]) + 1;
+            if (employees && employees.length > 0) {
+                const numbers = employees
+                    .map(e => {
+                        const match = e.code.match(/\d+/);
+                        return match ? parseInt(match[0]) : 0;
+                    })
+                    .filter(n => !isNaN(n));
+                if (numbers.length > 0) {
+                    nextNumber = Math.max(...numbers) + 1;
                 }
             }
             data.code = `EMP-${String(nextNumber).padStart(3, '0')}`;

@@ -11,12 +11,18 @@ class CustomerService {
     static async createCustomer(data) {
         // Auto-generate code if not provided
         if (!data.code) {
-            const lastCustomer = await Customer.findOne().sort({ code: -1 });
+            // Find the customer with the highest number in their code
+            const customers = await Customer.find({}, { code: 1 }).lean();
             let nextNumber = 1;
-            if (lastCustomer && lastCustomer.code) {
-                const match = lastCustomer.code.match(/\d+/);
-                if (match) {
-                    nextNumber = parseInt(match[0]) + 1;
+            if (customers && customers.length > 0) {
+                const numbers = customers
+                    .map(c => {
+                        const match = c.code.match(/\d+/);
+                        return match ? parseInt(match[0]) : 0;
+                    })
+                    .filter(n => !isNaN(n));
+                if (numbers.length > 0) {
+                    nextNumber = Math.max(...numbers) + 1;
                 }
             }
             data.code = `CUST-${String(nextNumber).padStart(3, '0')}`;

@@ -21,6 +21,10 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to Coconut Backend API', version: '1.0.0' });
 });
 
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
 // Module Routes
 const customerRoutes = require('./src/modules/customer/customer.routes');
 const employeeRoutes = require('./src/modules/employee/employee.routes');
