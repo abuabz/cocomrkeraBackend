@@ -4,7 +4,9 @@ class CustomerService {
     static calculateNextHarvest(lastHarvest) {
         if (!lastHarvest) return null;
         const date = new Date(lastHarvest);
-        date.setDate(date.getDate() + 45); // Adjusting to 45 days if needed, or keep 60
+        if (isNaN(date.getTime())) return null;
+        
+        date.setDate(date.getDate() + 45);
         return date;
     }
 

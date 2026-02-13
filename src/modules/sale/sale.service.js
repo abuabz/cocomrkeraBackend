@@ -30,7 +30,16 @@ class SaleService {
     }
 
     static async updateSale(id, data) {
-        return await Sale.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+        const updatedSale = await Sale.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+        
+        // If saleDate or customerId updated, refresh the customer's harvest date
+        if (updatedSale && (data.saleDate || data.customerId)) {
+            await CustomerService.updateCustomer(updatedSale.customerId, {
+                lastHarvest: updatedSale.saleDate
+            });
+        }
+        
+        return updatedSale;
     }
 
     static async deleteSale(id) {

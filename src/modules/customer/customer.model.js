@@ -14,14 +14,14 @@ const customerSchema = new mongoose.Schema({
     },
     phone: {
         type: String,
-        required: true
+        required: false
     },
     altPhone: {
         type: String
     },
     place: {
         type: String,
-        required: true
+        required: false
     },
     treeCount: {
         type: Number,

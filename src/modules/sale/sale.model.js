@@ -12,11 +12,11 @@ const saleSchema = new mongoose.Schema({
     },
     totalTrees: {
         type: Number,
-        required: true
+        required: false
     },
     perTreeAmount: {
         type: Number,
-        required: true
+        required: false
     },
     totalAmount: {
         type: Number,
@@ -24,7 +24,7 @@ const saleSchema = new mongoose.Schema({
     },
     paymentMode: {
         type: String,
-        required: true
+        required: false
     },
     employees: [{
         type: mongoose.Schema.Types.ObjectId,

@@ -14,14 +14,14 @@ const employeeSchema = new mongoose.Schema({
     },
     contact: {
         type: String,
-        required: true
+        required: false
     },
     altContact: {
         type: String
     },
     address: {
         type: String,
-        required: true
+        required: false
     },
     photo: {
         type: String
