@@ -1,12 +1,13 @@
 const { body } = require('express-validator');
 
 const validateCustomer = [
-    body('name').notEmpty().withMessage('Name is required'),
+    body('name').optional().notEmpty().withMessage('Name cannot be empty'),
     body('code').optional().trim(),
     body('phone')
-        .notEmpty().withMessage('Phone number is required')
+        .optional()
+        .notEmpty().withMessage('Phone number cannot be empty')
         .isMobilePhone().withMessage('Invalid phone number'),
-    body('place').notEmpty().withMessage('Place is required'),
+    body('place').optional().notEmpty().withMessage('Place cannot be empty'),
     body('treeCount')
         .optional()
         .isInt({ min: 0 }).withMessage('Tree count must be a non-negative integer'),

@@ -1,6 +1,7 @@
 const Customer = require('../customer/customer.model');
 const Employee = require('../employee/employee.model');
 const Sale = require('../sale/sale.model');
+const ApiResponse = require('../../utils/apiResponse');
 
 class StatsController {
     static async getDashboardStats(req, res) {
@@ -63,20 +64,17 @@ class StatsController {
                 .map(name => ({ name, trees: employeeMap[name] }))
                 .sort((a, b) => b.trees - a.trees);
 
-            res.status(200).json({
-                success: true,
-                data: {
-                    customerCount,
-                    employeeCount,
-                    totalSalesAmount,
-                    totalTreesMonth,
-                    monthlySalesData,
-                    employeePerformanceData,
-                    salesHistory: salesData.slice(0, 10)
-                }
+            return ApiResponse.success(res, 'Dashboard stats retrieved successfully', {
+                customerCount,
+                employeeCount,
+                totalSalesAmount,
+                totalTreesMonth,
+                monthlySalesData,
+                employeePerformanceData,
+                salesHistory: salesData.slice(0, 10)
             });
         } catch (error) {
-            res.status(500).json({ success: false, message: error.message });
+            next(error);
         }
     }
 
@@ -86,8 +84,15 @@ class StatsController {
             const filter = {};
             if (from || to) {
                 filter.saleDate = {};
-                if (from) filter.saleDate.$gte = new Date(from);
-                if (to) filter.saleDate.$lte = new Date(to);
+                if (from) {
+                    const fromDate = new Date(from);
+                    if (!isNaN(fromDate.getTime())) filter.saleDate.$gte = fromDate;
+                }
+                if (to) {
+                    const toDate = new Date(to);
+                    if (!isNaN(toDate.getTime())) filter.saleDate.$lte = toDate;
+                }
+                if (Object.keys(filter.saleDate).length === 0) delete filter.saleDate;
             }
 
             const sales = await Sale.find(filter).populate('customerId employees');
@@ -126,21 +131,18 @@ class StatsController {
             }, 0);
             const avgSaleValue = sales.length > 0 ? totalRevenue / sales.length : 0;
 
-            res.status(200).json({
-                success: true,
-                data: {
-                    salesCount: sales.length,
-                    customerSalesData,
-                    employeeTreeData,
-                    summary: {
-                        totalRevenue,
-                        totalTrees,
-                        avgSaleValue
-                    }
+            return ApiResponse.success(res, 'Reports retrieved successfully', {
+                salesCount: sales.length,
+                customerSalesData,
+                employeeTreeData,
+                summary: {
+                    totalRevenue,
+                    totalTrees,
+                    avgSaleValue
                 }
             });
         } catch (error) {
-            res.status(500).json({ success: false, message: error.message });
+            next(error);
         }
     }
 }
