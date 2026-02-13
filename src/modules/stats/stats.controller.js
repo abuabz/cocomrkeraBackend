@@ -32,8 +32,7 @@ class StatsController {
             
             // Initialize last 6 months
             for (let i = 5; i >= 0; i--) {
-                const d = new Date();
-                d.setMonth(now.getMonth() - i);
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthName = months[d.getMonth()];
                 monthlySalesMap[monthName] = { month: monthName, sales: 0, trees: 0 };
             }
@@ -54,7 +53,8 @@ class StatsController {
             salesData.forEach(sale => {
                 if (sale.employees && sale.treesHarvested) {
                     sale.employees.forEach((emp, index) => {
-                        const name = emp.name || 'Unknown';
+                        // Handle cases where employee might be deleted or not populated correctly
+                        const name = (emp && typeof emp === 'object') ? (emp.name || 'Unknown') : 'Deleted Employee';
                         employeeMap[name] = (employeeMap[name] || 0) + (sale.treesHarvested[index] || 0);
                     });
                 }
@@ -108,7 +108,7 @@ class StatsController {
             sales.forEach(sale => {
                 if (sale.employees && sale.treesHarvested) {
                     sale.employees.forEach((emp, index) => {
-                        const name = emp.name || 'Unknown';
+                        const name = (emp && typeof emp === 'object') ? (emp.name || 'Unknown') : 'Deleted Employee';
                         const count = sale.treesHarvested[index] || 0;
                         employeeMap[name] = (employeeMap[name] || 0) + count;
                     });

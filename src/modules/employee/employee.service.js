@@ -10,8 +10,15 @@ class EmployeeService {
 
         // Auto-generate code if not provided
         if (!data.code) {
-            const count = await Employee.countDocuments();
-            data.code = `EMP-${String(count + 1).padStart(3, '0')}`;
+            const lastEmployee = await Employee.findOne().sort({ code: -1 });
+            let nextNumber = 1;
+            if (lastEmployee && lastEmployee.code) {
+                const match = lastEmployee.code.match(/\d+/);
+                if (match) {
+                    nextNumber = parseInt(match[0]) + 1;
+                }
+            }
+            data.code = `EMP-${String(nextNumber).padStart(3, '0')}`;
         }
         
         const employee = new Employee(data);

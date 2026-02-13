@@ -1,9 +1,20 @@
 const Sale = require('./sale.model');
+const CustomerService = require('../customer/customer.service');
+const Customer = require('../customer/customer.model');
 
 class SaleService {
     static async createSale(data) {
         const sale = new Sale(data);
-        return await sale.save();
+        const savedSale = await sale.save();
+
+        // Update customer's harvest dates
+        if (data.customerId && data.saleDate) {
+            await CustomerService.updateCustomer(data.customerId, {
+                lastHarvest: data.saleDate
+            });
+        }
+
+        return savedSale;
     }
 
     static async getAllSales() {

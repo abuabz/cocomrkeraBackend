@@ -11,11 +11,18 @@ class CustomerService {
     static async createCustomer(data) {
         // Auto-generate code if not provided
         if (!data.code) {
-            const count = await Customer.countDocuments();
-            data.code = `CUST-${String(count + 1).padStart(3, '0')}`;
+            const lastCustomer = await Customer.findOne().sort({ code: -1 });
+            let nextNumber = 1;
+            if (lastCustomer && lastCustomer.code) {
+                const match = lastCustomer.code.match(/\d+/);
+                if (match) {
+                    nextNumber = parseInt(match[0]) + 1;
+                }
+            }
+            data.code = `CUST-${String(nextNumber).padStart(3, '0')}`;
         }
         
-        const nextHarvest = this.calculateNextHarvest(data.lastHarvest);
+        const nextHarvest = data.lastHarvest ? this.calculateNextHarvest(data.lastHarvest) : null;
         const customer = new Customer({ ...data, nextHarvest });
         return await customer.save();
     }
@@ -29,10 +36,16 @@ class CustomerService {
     }
 
     static async updateCustomer(id, data) {
-        const nextHarvest = this.calculateNextHarvest(data.lastHarvest);
+        const updateData = { ...data };
+        
+        // Only recalculate nextHarvest if lastHarvest is provided in the update
+        if (data.lastHarvest) {
+            updateData.nextHarvest = this.calculateNextHarvest(data.lastHarvest);
+        }
+
         return await Customer.findByIdAndUpdate(
             id,
-            { ...data, nextHarvest },
+            updateData,
             { new: true, runValidators: true }
         );
     }

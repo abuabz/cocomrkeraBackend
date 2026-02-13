@@ -22,7 +22,6 @@ app.get('/', (req, res) => {
 });
 
 // Module Routes
-// Module Routes
 const customerRoutes = require('./src/modules/customer/customer.routes');
 const employeeRoutes = require('./src/modules/employee/employee.routes');
 const followupRoutes = require('./src/modules/followup/followup.routes');
