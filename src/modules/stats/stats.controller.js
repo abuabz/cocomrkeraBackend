@@ -4,7 +4,7 @@ const Sale = require('../sale/sale.model');
 const ApiResponse = require('../../utils/apiResponse');
 
 class StatsController {
-    static async getDashboardStats(req, res) {
+    static async getDashboardStats(req, res, next) {
         try {
             const [customerCount, employeeCount, salesData] = await Promise.all([
                 Customer.countDocuments(),
@@ -78,7 +78,7 @@ class StatsController {
         }
     }
 
-    static async getReports(req, res) {
+    static async getReports(req, res, next) {
         try {
             const { from, to } = req.query;
             const filter = {};
