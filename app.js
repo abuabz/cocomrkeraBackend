@@ -22,7 +22,19 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+    const dbStatus = require('mongoose').connection.readyState;
+    const states = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting'
+    };
+    
+    res.json({ 
+        status: 'healthy', 
+        database: states[dbStatus] || 'unknown',
+        timestamp: new Date().toISOString() 
+    });
 });
 
 // Module Routes
