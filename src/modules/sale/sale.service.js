@@ -1,28 +1,29 @@
-const SaleModel = require('./sale.model');
+const Sale = require('./sale.model');
 
 class SaleService {
     static async createSale(data) {
-        return await SaleModel.create(data);
+        const sale = new Sale(data);
+        return await sale.save();
     }
 
     static async getAllSales() {
-        return await SaleModel.findAll();
+        return await Sale.find().populate('customerId').populate('employees').sort({ saleDate: -1 });
     }
 
     static async getSaleById(id) {
-        return await SaleModel.findById(id);
+        return await Sale.findById(id).populate('customerId').populate('employees');
     }
 
     static async getSalesByCustomerId(customerId) {
-        return await SaleModel.findByCustomerId(customerId);
+        return await Sale.find({ customerId }).populate('employees').sort({ saleDate: -1 });
     }
 
     static async updateSale(id, data) {
-        return await SaleModel.update(id, data);
+        return await Sale.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     }
 
     static async deleteSale(id) {
-        return await SaleModel.delete(id);
+        return await Sale.findByIdAndDelete(id);
     }
 }
 

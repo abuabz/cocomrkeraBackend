@@ -10,8 +10,8 @@ const notFoundHandler = require('./src/middlewares/notFound.middleware');
 const app = express();
 
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
@@ -28,12 +28,14 @@ const employeeRoutes = require('./src/modules/employee/employee.routes');
 const followupRoutes = require('./src/modules/followup/followup.routes');
 const saleRoutes = require('./src/modules/sale/sale.routes');
 const orderRoutes = require('./src/modules/order/order.routes');
+const statsRoutes = require('./src/modules/stats/stats.routes');
 
 app.use('/api/customers', customerRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/followups', followupRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/stats', statsRoutes);
 
 // 404 Handler
 app.use(notFoundHandler);

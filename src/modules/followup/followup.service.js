@@ -1,24 +1,25 @@
-const FollowupModel = require('./followup.model');
+const Followup = require('./followup.model');
 
 class FollowupService {
     static async createFollowup(data) {
-        return await FollowupModel.create(data);
+        const followup = new Followup(data);
+        return await followup.save();
     }
 
     static async getAllFollowups() {
-        return await FollowupModel.findAll();
+        return await Followup.find().sort({ date: -1 });
     }
 
     static async getFollowupById(id) {
-        return await FollowupModel.findById(id);
+        return await Followup.findById(id);
     }
 
     static async updateFollowup(id, data) {
-        return await FollowupModel.update(id, data);
+        return await Followup.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     }
 
     static async deleteFollowup(id) {
-        return await FollowupModel.delete(id);
+        return await Followup.findByIdAndDelete(id);
     }
 }
 
