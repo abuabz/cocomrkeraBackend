@@ -4,18 +4,16 @@ const connectDB = require('./src/config/db');
 
 // Connect to Database and Start Server
 const startServer = async () => {
-    try {
-        await connectDB();
+    const PORT = env.PORT;
+    
+    // Start listening immediately so Render sees the app as "Live"
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 Server is running on port ${PORT}`);
+        console.log(`🌍 Environment: ${env.NODE_ENV}`);
         
-        const PORT = env.PORT;
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server is running on port ${PORT}`);
-            console.log(`Environment: ${env.NODE_ENV}`);
-        });
-    } catch (error) {
-        console.error('Failed to start server:', error);
-        process.exit(1);
-    }
+        // Connect to database in the background
+        connectDB();
+    });
 };
 
 startServer();

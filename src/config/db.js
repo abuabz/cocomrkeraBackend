@@ -3,20 +3,25 @@ const env = require('./env');
 
 const connectDB = async () => {
     try {
-        const uri = env.MONGODB_URI;
+        let uri = env.MONGODB_URI;
         if (!uri) {
             throw new Error('MONGODB_URI is not defined in environment variables');
         }
         
+        // Clean the URI (remove accidental spaces or quotes)
+        uri = uri.trim().replace(/^["']|["']$/g, '');
+        
         // Mask URI for logging (hide username/password)
         const maskedUri = uri.replace(/\/\/.*@/, '//****:****@');
-        console.log(`Connecting to MongoDB: ${maskedUri}`);
+        console.log(`Attempting to connect to MongoDB: ${maskedUri}`);
 
         const conn = await mongoose.connect(uri);
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
+        console.log(`🟢 MongoDB Connected: ${conn.connection.host}`);
+        return true;
     } catch (error) {
-        console.error(`Database Connection Error: ${error.message}`);
-        throw error; // Rethrow to be handled by startServer
+        console.error(`🔴 Database Connection Error: ${error.message}`);
+        // Do not rethrow here, let the server stay alive so we can see the error in logs
+        return false;
     }
 };
 
