@@ -48,6 +48,7 @@ const followupRoutes = require('./src/modules/followup/followup.routes');
 const saleRoutes = require('./src/modules/sale/sale.routes');
 const orderRoutes = require('./src/modules/order/order.routes');
 const statsRoutes = require('./src/modules/stats/stats.routes');
+const salaryRoutes = require('./src/modules/salary/salary.routes');
 
 app.use('/api/customers', customerRoutes);
 app.use('/api/employees', employeeRoutes);
@@ -55,6 +56,7 @@ app.use('/api/followups', followupRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/salaries', salaryRoutes);
 
 // 404 Handler
 app.use(notFoundHandler);
