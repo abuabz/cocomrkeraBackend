@@ -8,7 +8,8 @@ const saleSchema = new mongoose.Schema({
     },
     saleDate: {
         type: Date,
-        required: true
+        required: true,
+        index: true
     },
     totalTrees: {
         type: Number,

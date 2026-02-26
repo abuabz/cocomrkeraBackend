@@ -18,27 +18,27 @@ class SaleService {
     }
 
     static async getAllSales() {
-        return await Sale.find().populate('customerId').populate('employees').sort({ saleDate: -1 }).lean();
+        return await Sale.find().populate('customerId').populate('employees', '-photo').sort({ saleDate: -1 }).lean();
     }
 
     static async getSaleById(id) {
-        return await Sale.findById(id).populate('customerId').populate('employees');
+        return await Sale.findById(id).populate('customerId').populate('employees', '-photo');
     }
 
     static async getSalesByCustomerId(customerId) {
-        return await Sale.find({ customerId }).populate('employees').sort({ saleDate: -1 }).lean();
+        return await Sale.find({ customerId }).populate('employees', '-photo').sort({ saleDate: -1 }).lean();
     }
 
     static async updateSale(id, data) {
         const updatedSale = await Sale.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-        
+
         // If saleDate or customerId updated, refresh the customer's harvest date
         if (updatedSale && (data.saleDate || data.customerId)) {
             await CustomerService.updateCustomer(updatedSale.customerId, {
                 lastHarvest: updatedSale.saleDate
             });
         }
-        
+
         return updatedSale;
     }
 

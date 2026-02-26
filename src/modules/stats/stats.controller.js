@@ -14,96 +14,163 @@ class StatsController {
             const [
                 customerCount,
                 employeeCount,
-                recentSales,
                 totalSalesAgg,
+                totalSalesMonthAgg,
                 totalTreesMonthAgg,
-                lastSixMonthsSales,
-                salesWithEmployees
+                lastSixMonthsAgg,
+                performanceAgg
             ] = await Promise.all([
                 Customer.countDocuments(),
                 Employee.countDocuments(),
-                Sale.find().populate('employees').sort({ saleDate: -1 }).limit(10).lean(),
                 // 1. Total Sales All-Time
                 Sale.aggregate([
                     { $group: { _id: null, total: { $sum: "$totalAmount" } } }
                 ]),
-                // 2. Total Trees This Month
+                // 2. Gross Sales This Month
                 Sale.aggregate([
                     { $match: { saleDate: { $gte: firstDayOfMonth } } },
-                    { $project: {
-                        treesInSale: {
-                             $cond: {
-                                  if: { $gt: [{ $ifNull: ["$totalTrees", 0] }, 0] },
-                                  then: "$totalTrees",
-                                  else: { $sum: { $ifNull: ["$treesHarvested", []] } }
-                             }
-                        }
-                    }},
-                    { $group: { _id: null, total: { $sum: "$treesInSale" } } }
+                    { $group: { _id: null, total: { $sum: "$totalAmount" } } }
                 ]),
-                // 3. Last 6 Months Sales Chart
-                Sale.find({ saleDate: { $gte: sixMonthsAgo } })
-                    .select('saleDate totalAmount totalTrees treesHarvested')
-                    .lean(),
-                // 4. Employee Performance (Only fetch relevant arrays)
-                Sale.find({ employees: { $exists: true, $not: { $size: 0 } } })
-                    .select('employees treesHarvested')
-                    .populate('employees', 'name')
-                    .lean()
+                // 3. Total Trees This Month
+                Sale.aggregate([
+                    { $match: { saleDate: { $gte: firstDayOfMonth } } },
+                    {
+                        $addFields: {
+                            saleTrees: { $ifNull: ["$totalTrees", { $sum: { $ifNull: ["$treesHarvested", []] } }] }
+                        }
+                    },
+                    { $group: { _id: null, total: { $sum: "$saleTrees" } } }
+                ]),
+                // 4. Last 6 Months Sales Chart
+                Sale.aggregate([
+                    { $match: { saleDate: { $gte: sixMonthsAgo } } },
+                    {
+                        $addFields: {
+                            saleTrees: { $ifNull: ["$totalTrees", { $sum: { $ifNull: ["$treesHarvested", []] } }] }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: { year: { $year: "$saleDate" }, month: { $month: "$saleDate" } },
+                            sales: { $sum: "$totalAmount" },
+                            trees: { $sum: "$saleTrees" }
+                        }
+                    },
+                    { $sort: { "_id.year": 1, "_id.month": 1 } }
+                ]),
+                // 5. Employee Performance
+                Sale.aggregate([
+                    { $unwind: { path: "$employees", includeArrayIndex: "empIdx" } },
+                    {
+                        $lookup: {
+                            from: "employees",
+                            localField: "employees",
+                            foreignField: "_id",
+                            as: "employeeInfo"
+                        }
+                    },
+                    { $unwind: "$employeeInfo" },
+                    {
+                        $group: {
+                            _id: "$employeeInfo.name",
+                            trees: { $sum: { $arrayElemAt: ["$treesHarvested", "$empIdx"] } }
+                        }
+                    },
+                    { $sort: { trees: -1 } },
+                    { $limit: 10 }
+                ])
             ]);
 
             const totalSalesAmount = totalSalesAgg[0] ? totalSalesAgg[0].total : 0;
+            const grossSalesMonth = totalSalesMonthAgg[0] ? totalSalesMonthAgg[0].total : 0;
             const totalTreesMonth = totalTreesMonthAgg[0] ? totalTreesMonthAgg[0].total : 0;
 
-            // Aggregate Monthly Sales (Last 6 months)
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            // Initialize last 6 months with zero values
             const monthlySalesMap = {};
-            
-            // Initialize last 6 months
             for (let i = 5; i >= 0; i--) {
                 const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthName = months[d.getMonth()];
                 monthlySalesMap[monthName] = { month: monthName, sales: 0, trees: 0 };
             }
 
-            lastSixMonthsSales.forEach(sale => {
-                const sd = new Date(sale.saleDate);
-                const monthName = months[sd.getMonth()];
+            lastSixMonthsAgg.forEach(item => {
+                const monthName = months[item._id.month - 1];
                 if (monthlySalesMap[monthName]) {
-                    monthlySalesMap[monthName].sales += (sale.totalAmount || 0);
-                    const sum = (sale.treesHarvested || []).reduce((a, b) => a + (b || 0), 0);
-                    monthlySalesMap[monthName].trees += (sale.totalTrees || sum || 0);
+                    monthlySalesMap[monthName].sales = item.sales;
+                    monthlySalesMap[monthName].trees = item.trees;
                 }
             });
             const monthlySalesData = Object.values(monthlySalesMap);
 
-            // Aggregate Employee Performance
-            const employeeMap = {};
-            salesWithEmployees.forEach(sale => {
-                if (sale.employees && sale.treesHarvested) {
-                    sale.employees.forEach((emp, index) => {
-                        const name = (emp && typeof emp === 'object') ? (emp.name || 'Unknown') : 'Deleted Employee';
-                        employeeMap[name] = (employeeMap[name] || 0) + (sale.treesHarvested[index] || 0);
-                    });
-                }
-            });
-            const employeePerformanceData = Object.keys(employeeMap)
-                .map(name => ({ name, trees: employeeMap[name] }))
-                .sort((a, b) => b.trees - a.trees);
+            const employeePerformanceData = performanceAgg.map(item => ({
+                name: item._id,
+                trees: item.trees
+            }));
 
             return ApiResponse.success(res, 'Dashboard stats retrieved successfully', {
                 customerCount,
                 employeeCount,
                 totalSalesAmount,
+                grossSalesMonth,
                 totalTreesMonth,
                 monthlySalesData,
-                employeePerformanceData,
-                salesHistory: recentSales
+                employeePerformanceData
             });
         } catch (error) {
             next(error);
         }
     }
+
+    static async getDashboardCounts(req, res, next) {
+        try {
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const [
+                customerCount,
+                employeeCount,
+                totalSalesAgg,
+                totalSalesMonthAgg,
+                totalTreesMonthAgg
+            ] = await Promise.all([
+                Customer.countDocuments(),
+                Employee.countDocuments(),
+                Sale.aggregate([
+                    { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+                ]),
+                Sale.aggregate([
+                    { $match: { saleDate: { $gte: firstDayOfMonth } } },
+                    { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+                ]),
+                Sale.aggregate([
+                    { $match: { saleDate: { $gte: firstDayOfMonth } } },
+                    {
+                        $addFields: {
+                            saleTrees: { $ifNull: ["$totalTrees", { $sum: { $ifNull: ["$treesHarvested", []] } }] }
+                        }
+                    },
+                    { $group: { _id: null, total: { $sum: "$saleTrees" } } }
+                ])
+            ]);
+
+            const totalSalesAmount = totalSalesAgg[0] ? totalSalesAgg[0].total : 0;
+            const grossSalesMonth = totalSalesMonthAgg[0] ? totalSalesMonthAgg[0].total : 0;
+            const totalTreesMonth = totalTreesMonthAgg[0] ? totalTreesMonthAgg[0].total : 0;
+
+            return ApiResponse.success(res, 'Dashboard counts retrieved successfully', {
+                customerCount,
+                employeeCount,
+                totalSalesAmount,
+                grossSalesMonth,
+                totalTreesMonth
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
 
     static async getReports(req, res, next) {
         try {
@@ -122,7 +189,7 @@ class StatsController {
                 if (Object.keys(filter.saleDate).length === 0) delete filter.saleDate;
             }
 
-            const sales = await Sale.find(filter).populate('customerId employees').lean();
+            const sales = await Sale.find(filter).populate('customerId').populate('employees', '-photo').lean();
 
             // Aggregate by Customer
             const customerMap = {};
@@ -211,9 +278,9 @@ class StatsController {
             }
 
             const [sales, salaries, employees] = await Promise.all([
-                Sale.find(filter).populate('employees').lean(),
+                Sale.find(filter).populate('employees', '-photo').lean(),
                 Salary.find(salaryFilter).lean(),
-                Employee.find().lean()
+                Employee.find().select('-photo').lean()
             ]);
 
             const reportMap = {};
@@ -237,11 +304,11 @@ class StatsController {
                     const treesArr = Array.isArray(sale.treesHarvested) ? sale.treesHarvested : [];
                     const sumHarvested = treesArr.reduce((a, b) => a + (b || 0), 0);
                     const totalTreesInSale = sumHarvested || sale.totalTrees || 0;
-                    
+
                     sale.employees.forEach((emp, index) => {
                         if (!emp) return;
                         const empId = emp._id.toString();
-                        
+
                         // If employee was deleted but exists in sale, we might not have them in reportMap
                         if (!reportMap[empId]) {
                             reportMap[empId] = {
