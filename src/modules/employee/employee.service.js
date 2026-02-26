@@ -32,7 +32,7 @@ class EmployeeService {
     }
 
     static async getAllEmployees() {
-        return await Employee.find().sort({ createdAt: -1 });
+        return await Employee.find().sort({ createdAt: -1 }).lean();
     }
 
     static async getEmployeeById(id) {

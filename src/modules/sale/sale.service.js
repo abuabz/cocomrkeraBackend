@@ -18,7 +18,7 @@ class SaleService {
     }
 
     static async getAllSales() {
-        return await Sale.find().populate('customerId').populate('employees').sort({ saleDate: -1 });
+        return await Sale.find().populate('customerId').populate('employees').sort({ saleDate: -1 }).lean();
     }
 
     static async getSaleById(id) {
@@ -26,7 +26,7 @@ class SaleService {
     }
 
     static async getSalesByCustomerId(customerId) {
-        return await Sale.find({ customerId }).populate('employees').sort({ saleDate: -1 });
+        return await Sale.find({ customerId }).populate('employees').sort({ saleDate: -1 }).lean();
     }
 
     static async updateSale(id, data) {

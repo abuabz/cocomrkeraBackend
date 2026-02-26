@@ -7,26 +7,53 @@ const ApiResponse = require('../../utils/apiResponse');
 class StatsController {
     static async getDashboardStats(req, res, next) {
         try {
-            const [customerCount, employeeCount, salesData] = await Promise.all([
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+            const [
+                customerCount,
+                employeeCount,
+                recentSales,
+                totalSalesAgg,
+                totalTreesMonthAgg,
+                lastSixMonthsSales,
+                salesWithEmployees
+            ] = await Promise.all([
                 Customer.countDocuments(),
                 Employee.countDocuments(),
-                Sale.find().populate('employees').sort({ saleDate: -1 })
+                Sale.find().populate('employees').sort({ saleDate: -1 }).limit(10).lean(),
+                // 1. Total Sales All-Time
+                Sale.aggregate([
+                    { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+                ]),
+                // 2. Total Trees This Month
+                Sale.aggregate([
+                    { $match: { saleDate: { $gte: firstDayOfMonth } } },
+                    { $project: {
+                        treesInSale: {
+                             $cond: {
+                                  if: { $gt: [{ $ifNull: ["$totalTrees", 0] }, 0] },
+                                  then: "$totalTrees",
+                                  else: { $sum: { $ifNull: ["$treesHarvested", []] } }
+                             }
+                        }
+                    }},
+                    { $group: { _id: null, total: { $sum: "$treesInSale" } } }
+                ]),
+                // 3. Last 6 Months Sales Chart
+                Sale.find({ saleDate: { $gte: sixMonthsAgo } })
+                    .select('saleDate totalAmount totalTrees treesHarvested')
+                    .lean(),
+                // 4. Employee Performance (Only fetch relevant arrays)
+                Sale.find({ employees: { $exists: true, $not: { $size: 0 } } })
+                    .select('employees treesHarvested')
+                    .populate('employees', 'name')
+                    .lean()
             ]);
 
-            const totalSalesAmount = salesData.reduce((acc, sale) => acc + (sale.totalAmount || 0), 0);
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-
-            const totalTreesMonth = salesData
-                .filter(sale => {
-                    const sd = new Date(sale.saleDate);
-                    return sd.getMonth() === currentMonth && sd.getFullYear() === currentYear;
-                })
-                .reduce((acc, sale) => {
-                    const sum = (sale.treesHarvested || []).reduce((a, b) => a + (b || 0), 0);
-                    return acc + (sale.totalTrees || sum || 0);
-                }, 0);
+            const totalSalesAmount = totalSalesAgg[0] ? totalSalesAgg[0].total : 0;
+            const totalTreesMonth = totalTreesMonthAgg[0] ? totalTreesMonthAgg[0].total : 0;
 
             // Aggregate Monthly Sales (Last 6 months)
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -39,7 +66,7 @@ class StatsController {
                 monthlySalesMap[monthName] = { month: monthName, sales: 0, trees: 0 };
             }
 
-            salesData.forEach(sale => {
+            lastSixMonthsSales.forEach(sale => {
                 const sd = new Date(sale.saleDate);
                 const monthName = months[sd.getMonth()];
                 if (monthlySalesMap[monthName]) {
@@ -52,10 +79,9 @@ class StatsController {
 
             // Aggregate Employee Performance
             const employeeMap = {};
-            salesData.forEach(sale => {
+            salesWithEmployees.forEach(sale => {
                 if (sale.employees && sale.treesHarvested) {
                     sale.employees.forEach((emp, index) => {
-                        // Handle cases where employee might be deleted or not populated correctly
                         const name = (emp && typeof emp === 'object') ? (emp.name || 'Unknown') : 'Deleted Employee';
                         employeeMap[name] = (employeeMap[name] || 0) + (sale.treesHarvested[index] || 0);
                     });
@@ -72,7 +98,7 @@ class StatsController {
                 totalTreesMonth,
                 monthlySalesData,
                 employeePerformanceData,
-                salesHistory: salesData.slice(0, 10)
+                salesHistory: recentSales
             });
         } catch (error) {
             next(error);
@@ -96,7 +122,7 @@ class StatsController {
                 if (Object.keys(filter.saleDate).length === 0) delete filter.saleDate;
             }
 
-            const sales = await Sale.find(filter).populate('customerId employees');
+            const sales = await Sale.find(filter).populate('customerId employees').lean();
 
             // Aggregate by Customer
             const customerMap = {};
@@ -185,9 +211,9 @@ class StatsController {
             }
 
             const [sales, salaries, employees] = await Promise.all([
-                Sale.find(filter).populate('employees'),
-                Salary.find(salaryFilter),
-                Employee.find()
+                Sale.find(filter).populate('employees').lean(),
+                Salary.find(salaryFilter).lean(),
+                Employee.find().lean()
             ]);
 
             const reportMap = {};

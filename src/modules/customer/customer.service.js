@@ -36,7 +36,7 @@ class CustomerService {
     }
 
     static async getAllCustomers() {
-        return await Customer.find().sort({ createdAt: -1 });
+        return await Customer.find().sort({ createdAt: -1 }).lean();
     }
 
     static async getCustomerById(id) {

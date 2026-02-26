@@ -7,7 +7,7 @@ class OrderService {
     }
 
     static async getAllOrders() {
-        return await Order.find().sort({ date: -1 });
+        return await Order.find().sort({ date: -1 }).lean();
     }
 
     static async getOrderById(id) {

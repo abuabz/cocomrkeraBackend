@@ -7,7 +7,7 @@ class FollowupService {
     }
 
     static async getAllFollowups() {
-        return await Followup.find().sort({ date: -1 });
+        return await Followup.find().sort({ date: -1 }).lean();
     }
 
     static async getFollowupById(id) {

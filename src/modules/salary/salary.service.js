@@ -9,7 +9,8 @@ class SalaryService {
     async getSalaries(query = {}) {
         return await Salary.find(query)
             .populate('employee', 'name code')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
     }
 
     async getSalaryById(id) {
