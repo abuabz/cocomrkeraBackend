@@ -1,6 +1,7 @@
 const Customer = require('../customer/customer.model');
 const Employee = require('../employee/employee.model');
 const Sale = require('../sale/sale.model');
+const Salary = require('../salary/salary.model');
 const ApiResponse = require('../../utils/apiResponse');
 
 class StatsController {
@@ -141,6 +142,120 @@ class StatsController {
                     avgSaleValue
                 }
             });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async getEmployeeReports(req, res, next) {
+        try {
+            const { from, to } = req.query;
+            const filter = {};
+            if (from || to) {
+                filter.saleDate = {};
+                if (from) {
+                    const fromDate = new Date(from);
+                    if (!isNaN(fromDate.getTime())) filter.saleDate.$gte = fromDate;
+                }
+                if (to) {
+                    const toDate = new Date(to);
+                    if (!isNaN(toDate.getTime())) {
+                        toDate.setHours(23, 59, 59, 999);
+                        filter.saleDate.$lte = toDate;
+                    }
+                }
+                if (Object.keys(filter.saleDate).length === 0) delete filter.saleDate;
+            }
+
+            const salaryFilter = {};
+            if (from || to) {
+                salaryFilter.paymentDate = {};
+                if (from) {
+                    const fromDate = new Date(from);
+                    if (!isNaN(fromDate.getTime())) salaryFilter.paymentDate.$gte = fromDate;
+                }
+                if (to) {
+                    const toDate = new Date(to);
+                    if (!isNaN(toDate.getTime())) {
+                        toDate.setHours(23, 59, 59, 999);
+                        salaryFilter.paymentDate.$lte = toDate;
+                    }
+                }
+                if (Object.keys(salaryFilter.paymentDate).length === 0) delete salaryFilter.paymentDate;
+            }
+
+            const [sales, salaries, employees] = await Promise.all([
+                Sale.find(filter).populate('employees'),
+                Salary.find(salaryFilter),
+                Employee.find()
+            ]);
+
+            const reportMap = {};
+
+            // Initialize with all employees
+            employees.forEach(emp => {
+                const empId = emp._id.toString();
+                reportMap[empId] = {
+                    id: empId,
+                    name: emp.name,
+                    code: emp.code,
+                    totalSalesAmount: 0,
+                    totalSalaryPaid: 0,
+                    totalTreesHarvested: 0
+                };
+            });
+
+            // Aggregate Sales
+            sales.forEach(sale => {
+                if (sale.employees && sale.employees.length > 0) {
+                    const treesArr = Array.isArray(sale.treesHarvested) ? sale.treesHarvested : [];
+                    const sumHarvested = treesArr.reduce((a, b) => a + (b || 0), 0);
+                    const totalTreesInSale = sumHarvested || sale.totalTrees || 0;
+                    
+                    sale.employees.forEach((emp, index) => {
+                        if (!emp) return;
+                        const empId = emp._id.toString();
+                        
+                        // If employee was deleted but exists in sale, we might not have them in reportMap
+                        if (!reportMap[empId]) {
+                            reportMap[empId] = {
+                                id: empId,
+                                name: (emp && typeof emp === 'object') ? (emp.name || 'Deleted Employee') : 'Deleted Employee',
+                                code: (emp && typeof emp === 'object') ? (emp.code || 'N/A') : 'N/A',
+                                totalSalesAmount: 0,
+                                totalSalaryPaid: 0,
+                                totalTreesHarvested: 0
+                            };
+                        }
+
+                        const empTrees = treesArr[index] || 0;
+                        reportMap[empId].totalTreesHarvested += empTrees;
+
+                        let empShareOfSale = 0;
+                        if (totalTreesInSale > 0) {
+                            empShareOfSale = (sale.totalAmount || 0) * (empTrees / totalTreesInSale);
+                        } else {
+                            empShareOfSale = (sale.totalAmount || 0) / sale.employees.length;
+                        }
+                        reportMap[empId].totalSalesAmount += empShareOfSale;
+                    });
+                }
+            });
+
+            // Aggregate Salaries
+            salaries.forEach(sal => {
+                const empId = sal.employee.toString();
+                if (reportMap[empId]) {
+                    reportMap[empId].totalSalaryPaid += (sal.amount || 0);
+                }
+            });
+
+            const reportData = Object.values(reportMap).map(item => ({
+                ...item,
+                profit: item.totalSalesAmount - item.totalSalaryPaid
+            })).sort((a, b) => b.totalSalesAmount - a.totalSalesAmount);
+
+            return ApiResponse.success(res, 'Employee reports retrieved successfully', reportData);
         } catch (error) {
             next(error);
         }
