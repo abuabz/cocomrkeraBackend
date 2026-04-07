@@ -19,7 +19,7 @@ class CustomerController {
 
     static async getAll(req, res, next) {
         try {
-            const customers = await CustomerService.getAllCustomers();
+            const customers = await CustomerService.getAllCustomers(req.query);
             return ApiResponse.success(res, 'Customers retrieved successfully', customers);
         } catch (error) {
             next(error);

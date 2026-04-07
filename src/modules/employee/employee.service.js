@@ -31,8 +31,8 @@ class EmployeeService {
         return await employee.save();
     }
 
-    static async getAllEmployees() {
-        return await Employee.find().sort({ createdAt: -1 }).lean();
+    static async getAllEmployees(filter = {}) {
+        return await Employee.find(filter).sort({ createdAt: -1 }).lean();
     }
 
     static async getEmployeeById(id) {

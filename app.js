@@ -50,6 +50,10 @@ const orderRoutes = require('./src/modules/order/order.routes');
 const statsRoutes = require('./src/modules/stats/stats.routes');
 const salaryRoutes = require('./src/modules/salary/salary.routes');
 const backupRoutes = require('./src/modules/backup/backup.routes');
+const authRoutes = require('./src/modules/auth/auth.routes');
+const userRoutes = require('./src/modules/user/user.routes');
+const savingsRoutes = require('./src/modules/savings/savings.routes');
+const expenseRoutes = require('./src/modules/expense/expense.routes');
 
 app.use('/api/customers', customerRoutes);
 app.use('/api/employees', employeeRoutes);
@@ -59,6 +63,10 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/salaries', salaryRoutes);
 app.use('/api/backup', backupRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/savings', savingsRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 // 404 Handler
 app.use(notFoundHandler);

@@ -13,7 +13,7 @@ class SaleController {
 
     static async getAll(req, res, next) {
         try {
-            const sales = await SaleService.getAllSales();
+            const sales = await SaleService.getAllSales(req.query);
             return ApiResponse.success(res, 'Sales retrieved successfully', sales);
         } catch (error) {
             next(error);

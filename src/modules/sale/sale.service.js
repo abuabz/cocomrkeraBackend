@@ -17,8 +17,8 @@ class SaleService {
         return savedSale;
     }
 
-    static async getAllSales() {
-        return await Sale.find().populate('customerId').populate('employees', '-photo').sort({ saleDate: -1 }).lean();
+    static async getAllSales(filter = {}) {
+        return await Sale.find(filter).populate('customerId').populate('employees', '-photo').sort({ saleDate: -1 }).lean();
     }
 
     static async getSaleById(id) {

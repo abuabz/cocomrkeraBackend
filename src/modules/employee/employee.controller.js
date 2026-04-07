@@ -13,7 +13,7 @@ class EmployeeController {
 
     static async getAll(req, res, next) {
         try {
-            const employees = await EmployeeService.getAllEmployees();
+            const employees = await EmployeeService.getAllEmployees(req.query);
             return ApiResponse.success(res, 'Employees retrieved successfully', employees);
         } catch (error) {
             next(error);

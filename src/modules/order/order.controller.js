@@ -13,7 +13,7 @@ class OrderController {
 
     static async getAll(req, res, next) {
         try {
-            const orders = await OrderService.getAllOrders();
+            const orders = await OrderService.getAllOrders(req.query);
             return ApiResponse.success(res, 'Orders retrieved successfully', orders);
         } catch (error) {
             next(error);

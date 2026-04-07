@@ -6,8 +6,8 @@ class OrderService {
         return await order.save();
     }
 
-    static async getAllOrders() {
-        return await Order.find().sort({ date: -1 }).lean();
+    static async getAllOrders(filter = {}) {
+        return await Order.find(filter).sort({ date: -1 }).lean();
     }
 
     static async getOrderById(id) {
