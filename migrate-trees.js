@@ -3,7 +3,7 @@ const Sale = require('./src/modules/sale/sale.model');
 require('dotenv').config();
 
 async function migrate() {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cocomrkera');
+    await mongoose.connect(process.env.MONGODB_URI);
     const sales = await Sale.find({ trees: { $exists: true } });
     console.log(`Found ${sales.length} sales to migrate`);
     

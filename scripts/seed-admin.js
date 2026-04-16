@@ -6,7 +6,7 @@ dotenv.config();
 
 const seedAdmin = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cocomrkera');
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected to MongoDB');
 
         const existingAdmin = await User.findOne({ username: 'admin' });

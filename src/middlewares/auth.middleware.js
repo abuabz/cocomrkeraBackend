@@ -12,7 +12,7 @@ const protect = async (req, res, next) => {
             return res.status(401).json({ message: 'Not authorized - No token' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-key-that-no-one-can-guess');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         const currentUser = await User.findById(decoded.id);
         if (!currentUser) {
