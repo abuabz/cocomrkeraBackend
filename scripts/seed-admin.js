@@ -1,9 +1,12 @@
+const path = require('path');
 const mongoose = require('mongoose');
 const User = require('../src/modules/user/user.model');
 const Branch = require('../src/modules/branch/branch.model');
 const dotenv = require('dotenv');
 
-dotenv.config();
+dotenv.config({
+    path: path.resolve(__dirname, '../.env')
+});
 
 const seedAdmin = async () => {
     try {

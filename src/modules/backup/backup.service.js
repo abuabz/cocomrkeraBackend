@@ -4,6 +4,10 @@ const Followup = require('../followup/followup.model');
 const Order = require('../order/order.model');
 const Salary = require('../salary/salary.model');
 const Sale = require('../sale/sale.model');
+const Branch = require('../branch/branch.model');
+const Expense = require('../expense/expense.model');
+const Savings = require('../savings/savings.model');
+const User = require('../user/user.model');
 
 const models = {
     customers: Customer,
@@ -11,13 +15,22 @@ const models = {
     followups: Followup,
     orders: Order,
     salaries: Salary,
-    sales: Sale
+    sales: Sale,
+    branches: Branch,
+    expenses: Expense,
+    savings: Savings,
+    users: User
 };
 
 const exportAll = async () => {
     const backup = {};
     for (const [key, Model] of Object.entries(models)) {
-        backup[key] = await Model.find({}).lean();
+        let query = Model.find({});
+        // Explicitly include password for users because it's mark as select:false in schema
+        if (key === 'users') {
+            query = query.select('+password');
+        }
+        backup[key] = await query.lean();
     }
     return backup;
 };
