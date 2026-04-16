@@ -1,4 +1,5 @@
 const User = require('../user/user.model');
+const Branch = require('../branch/branch.model');
 const jwt = require('jsonwebtoken');
 
 const signToken = (id) => {
@@ -27,6 +28,14 @@ const login = async (req, res, next) => {
 
         const token = signToken(user._id);
 
+        let branchName = user.branchId;
+        if (user.branchId === 'all') {
+            branchName = 'All Branches';
+        } else {
+            const branch = await Branch.findOne({ branchId: user.branchId });
+            if (branch) branchName = branch.name;
+        }
+
         res.status(200).json({
             status: 'success',
             token,
@@ -34,7 +43,7 @@ const login = async (req, res, next) => {
                 id: user._id,
                 username: user.username,
                 role: user.role,
-                branch: user.branch,
+                branch: branchName,
                 permissions: user.permissions
             }
         });
@@ -46,9 +55,24 @@ const login = async (req, res, next) => {
 const getMe = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
+        
+        let branchName = user.branchId;
+        if (user.branchId === 'all') {
+            branchName = 'All Branches';
+        } else {
+            const branch = await Branch.findOne({ branchId: user.branchId });
+            if (branch) branchName = branch.name;
+        }
+
         res.status(200).json({
             status: 'success',
-            user
+            user: {
+                id: user._id,
+                username: user.username,
+                role: user.role,
+                branch: branchName,
+                permissions: user.permissions
+            }
         });
     } catch (error) {
         next(error);
@@ -58,7 +82,7 @@ const getMe = async (req, res, next) => {
 // Simple register for initial admin creation
 const register = async (req, res, next) => {
     try {
-        const { username, password, role, branch, permissions } = req.body;
+        const { username, password, role, branchId, permissions } = req.body;
         
         // This should probably be admin-only, but we need logic to create the very first admin
         // To be safe, we'll check if any user exists or restrict it later
@@ -71,11 +95,19 @@ const register = async (req, res, next) => {
             username,
             password,
             role: role || 'basic',
-            branch: branch || 'all',
+            branchId: branchId || 'all',
             permissions: permissions || []
         });
 
         const token = signToken(user._id);
+
+        let branchName = user.branchId;
+        if (user.branchId === 'all') {
+            branchName = 'All Branches';
+        } else {
+            const branch = await Branch.findOne({ branchId: user.branchId });
+            if (branch) branchName = branch.name;
+        }
 
         res.status(201).json({
             status: 'success',
@@ -84,7 +116,7 @@ const register = async (req, res, next) => {
                 id: user._id,
                 username: user.username,
                 role: user.role,
-                branch: user.branch,
+                branch: branchName,
                 permissions: user.permissions
             }
         });

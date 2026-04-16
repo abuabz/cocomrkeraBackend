@@ -195,11 +195,18 @@ class StatsController {
             const customerMap = {};
             sales.forEach(sale => {
                 const name = sale.customerId?.name || 'Unknown';
-                customerMap[name] = (customerMap[name] || 0) + (sale.totalAmount || 0);
+                if (!customerMap[name]) {
+                    customerMap[name] = { sales: 0, trees: 0 };
+                }
+                customerMap[name].sales += (sale.totalAmount || 0);
+                
+                const treesSum = (sale.treesHarvested || []).reduce((a, b) => a + (b || 0), 0);
+                customerMap[name].trees += (sale.totalTrees || treesSum || 0);
             });
             const customerSalesData = Object.keys(customerMap).map(name => ({
                 name,
-                sales: customerMap[name]
+                sales: customerMap[name].sales,
+                trees: customerMap[name].trees
             })).sort((a, b) => b.sales - a.sales);
 
             // Aggregate by Employee (Tree Count)

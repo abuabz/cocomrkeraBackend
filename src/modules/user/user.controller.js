@@ -1,9 +1,24 @@
 const User = require('./user.model');
+const Branch = require('../branch/branch.model');
 
 const getAllUsers = async (req, res, next) => {
     try {
         const users = await User.find({}).sort({ createdAt: -1 });
-        res.status(200).json({ status: 'success', data: users });
+        
+        // Map users to include branch name
+        const usersWithBranchNames = await Promise.all(users.map(async (user) => {
+            const userData = user.toObject();
+            let branchName = userData.branchId;
+            if (userData.branchId === 'all') {
+                branchName = 'All Branches';
+            } else {
+                const branch = await Branch.findOne({ branchId: userData.branchId });
+                if (branch) branchName = branch.name;
+            }
+            return { ...userData, branchName };
+        }));
+
+        res.status(200).json({ status: 'success', data: usersWithBranchNames });
     } catch (error) {
         next(error);
     }
