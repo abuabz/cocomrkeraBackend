@@ -1,32 +1,33 @@
 const mongoose = require('mongoose');
 
-const employeeSchema = new mongoose.Schema({
-    name: {
+const branchSchema = new mongoose.Schema({
+    branchId: {
         type: String,
-        required: true,
-        trim: true
-    },
-    code: {
-        type: String,
-        required: true,
+        required: [true, 'Branch ID is required'],
         unique: true,
         trim: true
     },
-    contact: {
+    name: {
         type: String,
-        required: false
+        required: [true, 'Branch name is required'],
+        trim: true
     },
-    altContact: {
-        type: String
-    },
-    address: {
+    location: {
         type: String,
-        required: false
+        trim: true
     },
-    photo: {
-        type: String
+    managerName: {
+        type: String,
+        trim: true
     },
-    branchId: { type: String, default: "01", index: true }
+    managerContact: {
+        type: String,
+        trim: true
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    }
 }, {
     timestamps: true,
     toJSON: {
@@ -41,4 +42,4 @@ const employeeSchema = new mongoose.Schema({
     toObject: { virtuals: true }
 });
 
-module.exports = mongoose.model('Employee', employeeSchema);
+module.exports = mongoose.model('Branch', branchSchema);

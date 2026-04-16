@@ -12,6 +12,10 @@ const app = express();
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+const mongoose = require('mongoose');
+const { tenantPlugin, tenantMiddleware } = require('./src/middlewares/tenant.middleware');
+mongoose.plugin(tenantPlugin);
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -54,7 +58,7 @@ const authRoutes = require('./src/modules/auth/auth.routes');
 const userRoutes = require('./src/modules/user/user.routes');
 const savingsRoutes = require('./src/modules/savings/savings.routes');
 const expenseRoutes = require('./src/modules/expense/expense.routes');
-
+const branchRoutes = require('./src/modules/branch/branch.routes');
 app.use('/api/customers', customerRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/followups', followupRoutes);
@@ -67,7 +71,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/savings', savingsRoutes);
 app.use('/api/expenses', expenseRoutes);
-
+app.use('/api/branches', branchRoutes);
 // 404 Handler
 app.use(notFoundHandler);
 

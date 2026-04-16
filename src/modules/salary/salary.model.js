@@ -22,7 +22,8 @@ const salarySchema = new mongoose.Schema({
     remarks: {
         type: String,
         trim: true
-    }
+    },
+    branchId: { type: String, default: "01", index: true }
 }, {
     timestamps: true,
     toJSON: {

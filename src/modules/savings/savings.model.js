@@ -27,6 +27,7 @@ const savingsSchema = new mongoose.Schema({
         default: 'deposit',
         required: true
     },
+    branchId: { type: String, default: "01", index: true }
 }, {
     timestamps: true,
     toJSON: {

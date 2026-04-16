@@ -35,7 +35,8 @@ const customerSchema = new mongoose.Schema({
     },
     mapUrl: {
         type: String
-    }
+    },
+    branchId: { type: String, default: "01", index: true }
 }, {
     timestamps: true,
     toJSON: {

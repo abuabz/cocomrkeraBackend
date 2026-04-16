@@ -26,7 +26,8 @@ const userSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
-    }
+    },
+    branchId: { type: String, default: "01", index: true }
 }, {
     timestamps: true
 });

@@ -31,7 +31,8 @@ const saleSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Employee'
     }],
-    treesHarvested: [Number]
+    treesHarvested: [Number],
+    branchId: { type: String, default: "01", index: true }
 }, {
     timestamps: true,
     toJSON: {

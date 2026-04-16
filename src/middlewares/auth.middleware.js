@@ -27,10 +27,12 @@ const protect = async (req, res, next) => {
             id: currentUser._id,
             username: currentUser.username,
             role: currentUser.role,
-            branch: currentUser.branch,
+            branchId: currentUser.branchId,
             permissions: currentUser.permissions
         };
-        next();
+        
+        const { tenantMiddleware } = require('./tenant.middleware');
+        tenantMiddleware(req, res, next);
     } catch (error) {
         return res.status(401).json({ message: 'Not authorized - Token failed', error: error.message });
     }
@@ -45,7 +47,10 @@ const restrictTo = (...roles) => {
     };
 };
 
+const admin = restrictTo('admin');
+
 module.exports = {
     protect,
-    restrictTo
+    restrictTo,
+    admin
 };

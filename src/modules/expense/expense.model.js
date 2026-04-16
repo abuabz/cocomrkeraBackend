@@ -20,7 +20,8 @@ const expenseSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: 0
-    }
+    },
+    branchId: { type: String, default: "01", index: true }
 }, {
     timestamps: true,
     toJSON: {

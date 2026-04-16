@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const User = require('../src/modules/user/user.model');
+const Branch = require('../src/modules/branch/branch.model');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -8,6 +9,19 @@ const seedAdmin = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cocomrkera');
         console.log('Connected to MongoDB');
+
+        // Ensure default branch exists
+        let defaultBranch = await Branch.findOne({ branchId: '01' });
+        if (!defaultBranch) {
+            defaultBranch = await Branch.create({
+                branchId: '01',
+                name: 'Default Branch',
+                location: 'Main Location',
+                managerName: 'Admin',
+                isActive: true
+            });
+            console.log('Default Branch "01" created');
+        }
 
         const existingAdmin = await User.findOne({ username: 'admin' });
         if (existingAdmin) {

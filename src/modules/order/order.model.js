@@ -20,7 +20,8 @@ const orderSchema = new mongoose.Schema({
     date: {
         type: Date,
         required: true
-    }
+    },
+    branchId: { type: String, default: "01", index: true }
 }, {
     timestamps: true,
     toJSON: {
