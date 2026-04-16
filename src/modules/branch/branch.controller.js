@@ -42,12 +42,33 @@ const updateBranch = async (req, res, next) => {
     }
 };
 
+const User = require('../user/user.model');
+const Sale = require('../sale/sale.model');
+
 const deleteBranch = async (req, res, next) => {
     try {
-        const branch = await branchService.deleteBranch(req.params.id);
+        const branch = await branchService.getBranchById(req.params.id);
         if (!branch) {
             return res.status(404).json({ message: 'Branch not found' });
         }
+
+        // Check if any users are linked to this branch
+        const userCount = await User.countDocuments({ branchId: branch.branchId });
+        if (userCount > 0) {
+            return res.status(400).json({ 
+                message: `Cannot delete branch: ${userCount} user(s) are assigned to it. Please reassign or delete the users first.` 
+            });
+        }
+
+        // Check if any sales are linked to this branch
+        const saleCount = await Sale.countDocuments({ branchId: branch.branchId });
+        if (saleCount > 0) {
+            return res.status(400).json({ 
+                message: `Cannot delete branch: ${saleCount} sale record(s) are associated with it. Deletion is restricted to maintain data integrity.` 
+            });
+        }
+
+        await branchService.deleteBranch(req.params.id);
         res.json({ message: 'Branch deleted successfully' });
     } catch (error) {
         next(error);

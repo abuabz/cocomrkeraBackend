@@ -20,7 +20,11 @@ const branchSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    managerContact: {
+    contactPhone: {
+        type: String,
+        trim: true
+    },
+    contactEmail: {
         type: String,
         trim: true
     },
