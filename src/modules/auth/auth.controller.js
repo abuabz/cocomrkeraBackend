@@ -44,6 +44,7 @@ const login = async (req, res, next) => {
                 username: user.username,
                 role: user.role,
                 branch: branchName,
+                branchId: user.branchId,
                 permissions: user.permissions
             }
         });
@@ -71,6 +72,7 @@ const getMe = async (req, res, next) => {
                 username: user.username,
                 role: user.role,
                 branch: branchName,
+                branchId: user.branchId,
                 permissions: user.permissions
             }
         });
@@ -117,6 +119,7 @@ const register = async (req, res, next) => {
                 username: user.username,
                 role: user.role,
                 branch: branchName,
+                branchId: user.branchId,
                 permissions: user.permissions
             }
         });

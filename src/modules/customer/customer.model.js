@@ -9,7 +9,6 @@ const customerSchema = new mongoose.Schema({
     code: {
         type: String,
         required: true,
-        unique: true,
         trim: true
     },
     phone: {
@@ -50,5 +49,8 @@ const customerSchema = new mongoose.Schema({
     },
     toObject: { virtuals: true }
 });
+
+// Ensure code is unique within a branch
+customerSchema.index({ branchId: 1, code: 1 }, { unique: true });
 
 module.exports = mongoose.model('Customer', customerSchema);
