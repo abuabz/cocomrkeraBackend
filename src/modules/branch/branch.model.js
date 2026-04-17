@@ -34,6 +34,7 @@ const branchSchema = new mongoose.Schema({
     }
 }, {
     timestamps: true,
+    skipTenant: true,
     toJSON: {
         virtuals: true,
         transform: (doc, ret) => {

@@ -35,9 +35,13 @@ const getTenantContext = () => {
 };
 
 const tenantPlugin = function(schema) {
+    // Skip if schema explicitly opts out of multi-tenancy
+    if (schema.options.skipTenant) return;
+
     const applyBranch = function() {
         const store = getTenantContext();
-        if (store && store.branchId) {
+        // Skip filtering if no store, or if branchId is missing or set to 'all'
+        if (store && store.branchId && store.branchId !== 'all') {
             // Apply $match / where only if branchId is not already part of the query
             const currentQuery = this.getQuery();
             if (!currentQuery.branchId) {
@@ -54,7 +58,8 @@ const tenantPlugin = function(schema) {
 
     schema.pre('aggregate', function() {
         const store = getTenantContext();
-        if (store && store.branchId) {
+        // Skip filtering if no store, or if branchId is missing or set to 'all'
+        if (store && store.branchId && store.branchId !== 'all') {
             const pipeline = this.pipeline();
             // Don't inject if the first step already matches branchId
             if (pipeline.length === 0 || !pipeline[0].$match || !pipeline[0].$match.branchId) {

@@ -28,12 +28,12 @@ const login = async (req, res, next) => {
 
         const token = signToken(user._id);
 
-        let branchName = user.branchId;
-        if (user.branchId === 'all') {
+        let branchName = 'N/A';
+        if (!user.branchId || user.branchId === 'all') {
             branchName = 'All Branches';
         } else {
             const branch = await Branch.findOne({ branchId: user.branchId });
-            if (branch) branchName = branch.name;
+            branchName = branch ? branch.name : `Branch ${user.branchId}`;
         }
 
         res.status(200).json({
@@ -56,12 +56,12 @@ const getMe = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
         
-        let branchName = user.branchId;
-        if (user.branchId === 'all') {
+        let branchName = 'N/A';
+        if (!user.branchId || user.branchId === 'all') {
             branchName = 'All Branches';
         } else {
             const branch = await Branch.findOne({ branchId: user.branchId });
-            if (branch) branchName = branch.name;
+            branchName = branch ? branch.name : `Branch ${user.branchId}`;
         }
 
         res.status(200).json({
@@ -101,12 +101,12 @@ const register = async (req, res, next) => {
 
         const token = signToken(user._id);
 
-        let branchName = user.branchId;
-        if (user.branchId === 'all') {
+        let branchName = 'N/A';
+        if (!user.branchId || user.branchId === 'all') {
             branchName = 'All Branches';
         } else {
             const branch = await Branch.findOne({ branchId: user.branchId });
-            if (branch) branchName = branch.name;
+            branchName = branch ? branch.name : `Branch ${user.branchId}`;
         }
 
         res.status(201).json({
