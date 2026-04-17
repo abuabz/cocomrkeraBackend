@@ -4,7 +4,8 @@ const salaryController = require('./salary.controller');
 const { protect, restrictTo } = require('../../middlewares/auth.middleware');
 
 router.use(protect);
-router.use(restrictTo('admin')); // Salary restricted to admin
+// Allow both admin and basic users (frontend controls specific tab access)
+router.use(restrictTo('admin', 'basic'));
 
 router.post('/', salaryController.createSalary);
 router.get('/', salaryController.getSalaries);
