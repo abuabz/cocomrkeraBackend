@@ -15,7 +15,13 @@ class SalaryController {
 
     async getSalaries(req, res, next) {
         try {
-            const salaries = await salaryService.getSalaries(req.query);
+            const { type } = req.query;
+            let salaries;
+            if (type === 'automatic') {
+                salaries = await salaryService.getAutomaticSalaries(req.query);
+            } else {
+                salaries = await salaryService.getSalaries(req.query);
+            }
             res.status(200).json({
                 success: true,
                 count: salaries.length,

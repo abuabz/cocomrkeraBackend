@@ -10,14 +10,25 @@ const salarySchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    totalTrees: {
+        type: Number,
+        default: 0
+    },
+    status: {
+        type: String,
+        enum: ['Paid', 'Unpaid'],
+        default: 'Unpaid'
+    },
+    workDate: {
+        type: Date
+    },
     paymentMethod: {
         type: String,
-        enum: ['Cash', 'Bank Transfer', 'UPI', 'Other'],
-        required: true
+        enum: ['Cash', 'Bank Transfer', 'UPI', 'Other', 'Pending'],
+        default: 'Pending'
     },
     paymentDate: {
-        type: Date,
-        default: Date.now
+        type: Date
     },
     remarks: {
         type: String,
